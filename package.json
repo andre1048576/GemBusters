@@ -1,0 +1,39 @@
+{
+  "name": "my-rojo-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rbxtsc",
+    "watch": "rbxtsc -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@rbxts/compiler-types": "^3.0.0-types.0",
+    "@rbxts/types": "^1.0.865",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-roblox-ts": "^0.0.36",
+    "prettier": "^3.6.2",
+    "roblox-ts": "^3.0.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@rbxts/component": "^1.2.0",
+    "@rbxts/document-service": "^1.2.2-ts.1",
+    "@rbxts/pretty-react-hooks": "^0.6.4",
+    "@rbxts/react": "^17.2.3",
+    "@rbxts/react-roblox": "^17.2.3",
+    "@rbxts/remo": "^1.5.2",
+    "@rbxts/ripple": "^0.9.3",
+    "@rbxts/services": "^1.5.5",
+    "@rbxts/t": "^3.2.1",
+    "@rbxts/tween": "^1.0.5"
+  }
+}
