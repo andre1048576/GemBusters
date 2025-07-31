@@ -5,7 +5,6 @@ import { Direction, opposite_direction } from "shared/path";
 const BASE_SIZE = 5;
 
 export class Board extends TagComponent<Folder> {
-	
 	public pathNodes: Part[] = [];
 
 	public Nodes: Part[][][] = [];
@@ -15,13 +14,13 @@ export class Board extends TagComponent<Folder> {
 	public GridSize!: number;
 	public centerCFrame!: CFrame;
 	public paths!: Map<Vector3, string>;
-
+	public avatar_positions: [PVInstance, Vector3][] = [];
 	Initialize(): void {
-		print('hi')
+		print("hi");
 	}
 
 	Start(): void {
-		print('start board');
+		print("start board");
 		const board = board1.construct();
 		this.GridY = board.size();
 		this.GridX = board[0].size();
@@ -30,11 +29,11 @@ export class Board extends TagComponent<Folder> {
 			let columnNodes: Part[][] = [];
 			models.forEach((tile, r) => {
 				tile.SetAttribute("Position", new Vector3(r, c));
-				print('using grid size',this.GridSize);
+				print("using grid size", this.GridSize);
 				tile.ScaleTo(this.GridSize / BASE_SIZE);
 				tile.PivotTo(
 					this.centerCFrame
-						.add(new Vector3((r-this.GridX) * this.GridSize, 0, (c-this.GridY) * this.GridSize))
+						.add(new Vector3((r - this.GridX / 2) * this.GridSize, 0, (c - this.GridY / 2) * this.GridSize))
 						.mul(CFrame.Angles(0, math.rad(tile.PrimaryPart!.Orientation.Y), 0)),
 				);
 				tile.Parent = this.Object;
@@ -55,9 +54,15 @@ export class Board extends TagComponent<Folder> {
 		this.recalculate_paths();
 	}
 
-	add_to_board(obj : PVInstance,avatar_spawn_pos: Vector3) {
-		print(this.Nodes);
+	public add_to_board(obj: PVInstance, avatar_spawn_pos: Vector3) {
+		this.avatar_positions.push([obj, avatar_spawn_pos]);
 		obj.PivotTo(this.Nodes[avatar_spawn_pos.Z][avatar_spawn_pos.X][avatar_spawn_pos.Y].GetPivot());
+	}
+
+	public avatar_done_move(obj : PVInstance,avatar_pos : Vector3) {
+		print('avatar done move')
+		this.avatar_positions.remove(this.avatar_positions.findIndex((v) => v[0] === obj));
+		this.avatar_positions.push([obj, avatar_pos]);
 	}
 
 	public recalculate_paths() {
@@ -138,7 +143,7 @@ export class Board extends TagComponent<Folder> {
 	 */
 	public pathfind(avatar: AvatarClass) {
 		const avatar_pos = avatar.GetAttribute("Position") as Vector3;
-		let distance = 50;
+		let distance = 5;
 		this.paths = new Map();
 		let root = this.Nodes[avatar_pos.Z][avatar_pos.X][avatar_pos.Y];
 		let checking: [Part, number, string][] = [[root, distance, ""]];
@@ -147,6 +152,12 @@ export class Board extends TagComponent<Folder> {
 			const [current_part, distance, path] = checking.shift()!;
 			this.get_adjacent(current_part.GetAttribute("Position") as Vector3)
 				?.filter((partTuple) => !valid.includes(partTuple[0]))
+				.filter((partTuple) => {
+					print(this.avatar_positions, partTuple[0].GetAttribute("Position") as Vector3);
+					return !this.avatar_positions
+						.map((v) => v[1])
+						.includes(partTuple[0].GetAttribute("Position") as Vector3);
+				})
 				.forEach((partTuple) => {
 					const [part, direction] = partTuple;
 					let pathClone = path;

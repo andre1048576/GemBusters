@@ -85,7 +85,7 @@ export function AvatarUI() {
 					part.CanTouch = false;
 					part.Material = Enum.Material.SmoothPlastic;
 					part.Color = Color3.fromRGB(138,18,194);
-					part.Size = new Vector3(10, 0.1, 10).mul(tile.GetAttribute("HighlightSize") as Vector3);
+					part.Size = new Vector3(8, 0.1, 8).mul(tile.GetAttribute("HighlightSize") as Vector3);
 					part.Transparency = 0.5;
 					clickDetector.MouseHoverEnter.Connect(() => (part.BrickColor = BrickColor.Green()));
 					clickDetector.MouseHoverLeave.Connect(() => (part.Color = Color3.fromRGB(138,18,194)));

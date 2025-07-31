@@ -68,10 +68,11 @@ export class BoardString {
 }
 
 export const board1: BoardString = new BoardString(`
-___↑___
-_W___W_
-_C___C_
-___↓___
+______
+__22←_
+__22←_
+__↑↑__
+______
 `);
 
 /*

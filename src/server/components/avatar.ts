@@ -5,7 +5,6 @@ import { Linear } from "@rbxts/easing-functions";
 import { Direction, letter_to_dir, opposite_direction } from "../../shared/path";
 import { remotes } from "../../shared/remotes";
 
-
 export class Avatar extends TagComponent<AvatarClass> {
 	private move_model(model: AvatarClass, direction: Direction, distance: number) {
 		if (distance < 0) {
@@ -40,9 +39,7 @@ export class Avatar extends TagComponent<AvatarClass> {
 			(dist) => {
 				const origin = dist.mul(new Vector3(1, 0, 1)).add(new Vector3(0, model.PrimaryPart!.Position.Y + 1, 0));
 				const raycastResult = Workspace.Raycast(origin, Vector3.yAxis.mul(-10), rcParams);
-				const goal = dist
-					.mul(new Vector3(1, 0, 1))
-					.add(raycastResult?.Position!.mul(Vector3.yAxis)!)
+				const goal = dist.mul(new Vector3(1, 0, 1)).add(raycastResult?.Position!.mul(Vector3.yAxis)!);
 				model.PivotTo(new CFrame(goal, goal.add(delta)));
 			},
 			model.GetPivot().Position,
@@ -52,8 +49,8 @@ export class Avatar extends TagComponent<AvatarClass> {
 	}
 
 	public walking_tween: PseudoTween | undefined;
-	private current_player?: Player;
-	public GridSize! : number;
+	public current_player!: Player;
+	public GridSize!: number;
 	private Move(goal: Vector3) {
 		const path = this.Object.GetTileInfo.Invoke(goal) as string;
 		const animator = this.Object.FindFirstChild("Animator", true) as Animator;
@@ -67,11 +64,25 @@ export class Avatar extends TagComponent<AvatarClass> {
 				}
 				this.Object.ClickDetector.MaxActivationDistance = 1e5;
 				anim.Stop();
-				remotes.avatar_selected.fire(this.current_player!, undefined);
-				this.current_player = undefined;
+				remotes.avatar_selected.fire(this.current_player, undefined);
 				this.Object.SetAttribute("Position", goal);
+				this.Object.MoveFinished.Fire();
 			}),
 		);
+	}
+
+	public selected() {
+		remotes.avatar_selected.fire(this.current_player, this.Object);
+		this.Object.ClickDetector.MaxActivationDistance = 0;
+		let goal: Vector3;
+		this.Trove.addPromise(
+			remotes.avatar_option_selected
+				.promise(
+					(p) => p === this.current_player,
+					(_, n) => (goal = n),
+				)
+				.andThenCall(() => this.Move(goal)),
+		).await();
 	}
 
 	public Initialize(): void {
@@ -81,21 +92,10 @@ export class Avatar extends TagComponent<AvatarClass> {
 		this.Trove.add(this.Object);
 		this.Trove.add(
 			this.Object.ClickDetector.MouseClick.Connect((player) => {
-				if (this.current_player) {
+				if (this.current_player !== player) {
 					return;
 				}
-				this.current_player = player;
-				remotes.avatar_selected.fire(player, this.Object);
-				this.Object.ClickDetector.MaxActivationDistance = 0;
-				let goal: Vector3;
-				this.Trove.addPromise(
-					remotes.avatar_option_selected
-						.promise(
-							(p) => p === player,
-							(_, n) => (goal = n),
-						)
-						.andThenCall(() => this.Move(goal)),
-				);
+				//this.selected();
 			}),
 		);
 	}

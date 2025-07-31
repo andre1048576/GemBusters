@@ -5,10 +5,15 @@ interface Workspace extends Instance {
 	Hurt: Part & {
 		PointLight: PointLight;
 	};
+	MatchOrigin : MatchClass;
 }
 
 interface MatchClass extends Part {
 	Tiles: Folder;
+}
+
+interface MatchSpawnerI extends Part {
+	ClickDetector : ClickDetector;
 }
 
 interface AvatarClass extends Model {
@@ -16,6 +21,7 @@ interface AvatarClass extends Model {
 	GetTileInfo: BindableFunction;
 	GetTiles: RemoteFunction;
 	Humanoid: Humanoid;
+	MoveFinished : BindableEvent;
 }
 
 interface ReplicatedStorage extends Instance {
