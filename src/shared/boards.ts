@@ -17,27 +17,53 @@ export class BoardString {
 			case "→":
 			case "←":
 				const slope = ReplicatedStorage.Tiles.Slope.Clone();
-				let angle!: number;
+				let slope_angle!: number;
 				if (c === "↑") {
-					angle = 0;
+					slope_angle = 0;
 					slope.pathnode.SetAttribute("Direction", Direction.Up);
 				}
 				if (c === "←") {
-					angle = math.pi / 2;
+					slope_angle = math.pi / 2;
 					slope.pathnode.SetAttribute("Direction", Direction.Left);
 				}
 				if (c === "↓") {
-					angle = math.pi;
+					slope_angle = math.pi;
 					slope.pathnode.SetAttribute("Direction", Direction.Down);
 				}
 				if (c === "→") {
-					angle = (3 * math.pi) / 2;
+					slope_angle = (3 * math.pi) / 2;
 					slope.pathnode.SetAttribute("Direction", Direction.Right);
 				}
-				slope.PivotTo(slope.GetPivot().mul(CFrame.Angles(0, angle, 0)));
+				slope.PivotTo(slope.GetPivot().mul(CFrame.Angles(0, slope_angle, 0)));
 				return slope;
+			case "v":
+			case "^":
+			case "<":
+			case ">":
+				const ladder = ReplicatedStorage.Tiles.Ladder.Clone();
+				let ladder_angle!: number;
+				if (c === "^") {
+					ladder_angle = 0;
+					ladder.pathnode.SetAttribute("Direction", Direction.Up);
+				}
+				if (c === "<") {
+					ladder_angle = math.pi / 2;
+					ladder.pathnode.SetAttribute("Direction", Direction.Left);
+				}
+				if (c === "v") {
+					ladder_angle = math.pi;
+					ladder.pathnode.SetAttribute("Direction", Direction.Down);
+				}
+				if (c === ">") {
+					ladder_angle = (3 * math.pi) / 2;
+					ladder.pathnode.SetAttribute("Direction", Direction.Right);
+				}
+				ladder.PivotTo(ladder.GetPivot().mul(CFrame.Angles(0, ladder_angle, 0)));
+				return ladder;
 			case "C":
 				return ReplicatedStorage.Tiles.Ceiling.Clone();
+			case "E":
+				return ReplicatedStorage.Tiles.Elevator.Clone();
 			default:
 				error("invalid character in board declaration : c");
 		}
@@ -68,11 +94,16 @@ export class BoardString {
 }
 
 export const board1: BoardString = new BoardString(`
-______
-__22←_
-__22←_
-__↑↑__
-______
+__________
+__________
+______FFF_
+_FFE__22F_
+_FF__>F2F_
+_EE__>F2F_
+______F2F_
+CCC__→22F_
+22C__→2←__
+E2C_______
 `);
 
 /*

@@ -15,7 +15,7 @@ export class Match extends TagComponent<MatchClass> {
 
 	public Start(): void {
 		this.GridSize = this.Object.GetAttribute("TileSize") as number;
-		const centerCFrame = this.Object.CFrame.add(Vector3.yAxis);
+		const centerCFrame = this.Object.CFrame.add(Vector3.yAxis).add(new Vector3(this.GridSize/2,0,this.GridSize/2));
 		const [success1, board] = Components.Instantiate(Board, this.Object.Tiles, "Board").await();
 		if (!success1) {
 			error("how did that not load??");
@@ -43,13 +43,14 @@ export class Match extends TagComponent<MatchClass> {
 			const destinationY = index;
 			const avatar_spawn_pos = new Vector3(destinationX, 0, destinationY)
 			avatar.SetAttribute("Position", avatar_spawn_pos);
-			this.board.add_to_board(avatar,avatar_spawn_pos)
 			avatar.Parent = this.Object;
 			const [success, a] = Components.Instantiate<Avatar>(Avatar, avatar, "Avatar").await();
 			if (!success) {
 				error("avatar failed to be instantiated!");
 			}
+			this.board.add_to_board(a,avatar_spawn_pos)
 			this.avatars.push(a);
+			a.tileOn = this.board.get_tile(avatar_spawn_pos);
 			a.current_player = player;
 			a.GridSize = this.GridSize;
 			this.Trove.add(a);
@@ -66,14 +67,9 @@ export class Match extends TagComponent<MatchClass> {
 			avatar.Object.GetTiles.OnServerInvoke = () => {
 				return this.board.pathfind(avatar.Object);
 			};
-			avatar.Object.MoveFinished.Event.Connect(() => {
-				const new_pos = avatar.Object.GetAttribute("Position") as Vector3
-				this.board.avatar_done_move(avatar.Object,new_pos);
-			})
 		});
 		this.Trove.add(task.spawn(() => {
 			let index = 0;
-			print('hi');
 			while (true) {
 				//tell the first avatar it can be selected
 				const avatar = this.avatars[index]

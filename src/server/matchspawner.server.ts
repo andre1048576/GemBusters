@@ -12,7 +12,7 @@ export class MatchSpawner extends TagComponent<MatchSpawnerI> {
         this.Trove.add(this.Object.ClickDetector.MouseClick.Connect(player => {
             if (!this.players.includes(player)) {
                 this.players.push(player)
-                if (this.players.size() === 2) {
+                if (this.players.size() === this.Object.GetAttribute("player_count")) {
                     const [success,matchObj] = Components.Instantiate(Match,Workspace.MatchOrigin,"Match").await();
                     if (!success) {
                         error("did not load match properly")

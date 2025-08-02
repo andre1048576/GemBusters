@@ -51,12 +51,6 @@ task.spawn(() => {
 	}
 });
 
-task.spawn(() => {
-	while (true) {
-		Tween(1, Linear, (hue) => (Workspace.Hurt.PointLight.Color = Color3.fromHSV(hue, 1, 1))).Wait();
-	}
-});
-
 Workspace.Hurt.Touched.Connect((part) => {
 	const player = Players.GetPlayerFromCharacter(part.Parent);
 	if (!player) {

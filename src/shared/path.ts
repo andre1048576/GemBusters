@@ -6,16 +6,12 @@ export enum Direction {
 }
 
 
-export function letter_to_dir(c : string) {
-	switch (c) {
-		case "W":
-			return Direction.Up;
-		case "A":
-			return Direction.Left;
-		case "S":
-			return Direction.Down;
-		case "D":
-			return Direction.Right;
+export function direction_to_name(d : Direction) : string {
+	switch(d) {
+		case Direction.Up: return "Up"
+		case Direction.Down: return "Down"
+		case Direction.Left: return "Left"
+		case Direction.Right: return "Right"
 	}
 }
 

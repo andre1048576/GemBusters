@@ -1,9 +1,8 @@
 import { useEventListener, useMotion } from "@rbxts/pretty-react-hooks";
 import React, { useState } from "@rbxts/react";
-import { func } from "@rbxts/react/src/prop-types";
-import { Lighting } from "@rbxts/services";
 import { remotes } from "shared/remotes";
 import { Trove } from "@rbxts/trove";
+import { PathTile } from "shared/tiles/tile";
 
 enum Page {
 	Primary,
@@ -21,7 +20,7 @@ function MainPage({ onClick }: MainPageProps) {
 		<textbutton
 			BackgroundColor3={new Color3(1, 1, 1)}
 			TextScaled={true}
-			Size={UDim2.fromScale(1, 1)}
+			Size={UDim2.fromScale(.2, 1)}
 			Text={"move"}
 			Event={{
 				Activated: onClick,
@@ -62,13 +61,13 @@ export function AvatarUI() {
 		trove.add(
 			task.spawn(() => {
 				setVisiblePage(Page.Back);
-				const tiles: [Part] = avatar?.GetTiles.InvokeServer();
+				const tiles: [PathTile] = avatar?.GetTiles.InvokeServer();
 
 				const bindable = new Instance("BindableEvent");
 
 				function onHoveredPartClicked(part: Part) {
-					const name = part.Parent?.GetAttribute("Position") as Vector3;
-					bindable.Fire(name);
+					const position = part.Parent?.GetAttribute("Position") as Vector3;
+					bindable.Fire(position);
 				}
 				const part_trove = trove.extend();
 				for (const tile of tiles) {
@@ -76,26 +75,25 @@ export function AvatarUI() {
 					part_trove.add(part);
 					const clickDetector = new Instance("ClickDetector");
 					clickDetector.MaxActivationDistance = 1e5;
-					part.PivotOffset = new CFrame(0, -0.05, 0);
-					part.PivotTo(tile.CFrame.mul(new CFrame(0, -tile.Size.Y/2, 0)));
-					part.Parent = tile;
+					part.PivotTo((tile.Object.CFrame.mul(new CFrame(0, -tile.Object.Size.Y/2, 0))));
+					part.Parent = tile.Object;
 					part.Anchored = true;
 					part.CanCollide = false;
 					part.CanQuery = true;
 					part.CanTouch = false;
 					part.Material = Enum.Material.SmoothPlastic;
 					part.Color = Color3.fromRGB(138,18,194);
-					part.Size = new Vector3(8, 0.1, 8).mul(tile.GetAttribute("HighlightSize") as Vector3);
+					part.Size = new Vector3(8, 0, 8).mul(tile.Object.GetAttribute("HighlightSize") as Vector3);
 					part.Transparency = 0.5;
 					clickDetector.MouseHoverEnter.Connect(() => (part.BrickColor = BrickColor.Green()));
 					clickDetector.MouseHoverLeave.Connect(() => (part.Color = Color3.fromRGB(138,18,194)));
 					clickDetector.Parent = part;
 					clickDetector.MouseClick.Connect(() => onHoveredPartClicked(part));
 				}
-				const [name] = bindable.Event.Wait();
+				const [position] = bindable.Event.Wait();
 				part_trove.destroy();
 				setVisible(false);
-				remotes.avatar_option_selected.fire(name);
+				remotes.avatar_option_selected.fire(position);
 			}),
 		);
 	}
@@ -120,7 +118,7 @@ export function AvatarUI() {
 	}
 
 	return (
-		<billboardgui
+		/*<billboardgui
 			Adornee={avatar!.PrimaryPart}
 			Size={UDim2.fromScale(8, 8)}
 			AlwaysOnTop={true}
@@ -129,6 +127,14 @@ export function AvatarUI() {
 			ResetOnSpawn={false}
 		>
 			{pageRender(visiblePage)}
-		</billboardgui>
+		</billboardgui>*/
+		<screengui>
+			<frame
+			Position={UDim2.fromScale(.5,.9)}
+			AnchorPoint={new Vector2(.5,1)}
+			Size={UDim2.fromScale(.7,.2)}>
+				{pageRender(visiblePage)}
+			</frame>
+		</screengui>
 	);
 }

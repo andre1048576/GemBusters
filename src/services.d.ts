@@ -12,6 +12,13 @@ interface MatchClass extends Part {
 	Tiles: Folder;
 }
 
+interface PathNode extends Part {
+	Left: Folder;
+	Right: Folder;
+	Down: Folder;
+	Up: Folder;
+}
+
 interface MatchSpawnerI extends Part {
 	ClickDetector : ClickDetector;
 }
@@ -31,9 +38,17 @@ interface ReplicatedStorage extends Instance {
 		Flat : Model;
 		Slope : Model & {
 			pathnode : Part;
+		};
+		Ladder : Model & {
+			pathnode : Part;
 		}
 		Solid : Model;
 		Wall : Model;
 		Ceiling : Model;
+		Elevator : Model;
+	}
+	TileObjects : Folder & {
+		HealthCube : Model;
+		Spike : Model;
 	}
 }

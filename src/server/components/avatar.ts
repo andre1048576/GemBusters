@@ -1,71 +1,77 @@
-import { TagComponent, Component } from "@rbxts/component";
+import { Components, TagComponent } from "@rbxts/component";
+import { Linear } from "@rbxts/easing-functions";
 import { Workspace } from "@rbxts/services";
 import Tween, { PseudoTween } from "@rbxts/tween";
-import { Linear } from "@rbxts/easing-functions";
-import { Direction, letter_to_dir, opposite_direction } from "../../shared/path";
+import { PathTile } from "shared/tiles/tile";
+import { TileConstructor } from "shared/tiles/tile_constructor";
 import { remotes } from "../../shared/remotes";
 
 export class Avatar extends TagComponent<AvatarClass> {
-	private move_model(model: AvatarClass, direction: Direction, distance: number) {
-		if (distance < 0) {
-			this.move_model(model, opposite_direction(direction), -distance);
-			return;
-		} else if (distance === 0) {
+	private animator = this.Object.FindFirstChild("Animator", true) as Animator;
+	private walk_track = this.Object.FindFirstChild("Walk", true) as Animation;
+	private walk_anim = this.animator.LoadAnimation(this.walk_track);
+	private climb_track = this.Object.FindFirstChild("Climb", true) as Animation;
+	private climb_anim = this.animator.LoadAnimation(this.climb_track);
+
+	private move_model(model: AvatarClass, end_part: Part, current_part: Part | undefined) {
+		const SPEED = this.GridSize * 3;
+		const end_point = end_part.GetPivot().Position;
+		const delta = end_point.sub(model.GetPivot().Position);
+		const distance = delta.Magnitude;
+		if (distance < 0.1) {
 			return;
 		}
-		const SPEED = this.GridSize * 3;
-		function direction_to_v3(direction: Direction, distance: number): Vector3 {
-			switch (direction) {
-				case Direction.Up:
-					return Vector3.zAxis.mul(distance);
-				case Direction.Down:
-					return Vector3.zAxis.mul(-distance);
-				case Direction.Left:
-					return Vector3.xAxis.mul(distance);
-				case Direction.Right:
-					return Vector3.xAxis.mul(-distance);
+
+		let lookDelta = delta;
+		const is_climb = end_part.HasTag("Climb") && current_part?.HasTag("Climb");
+		if (is_climb) {
+			this.climb_anim.Play(0);
+			lookDelta = model.GetPivot().LookVector;
+			if (current_part!.Position.Y > end_part.Position.Y) {
+				lookDelta = lookDelta.mul(-1);
 			}
 		}
-		const delta = direction_to_v3(direction, distance);
-
-		const rcParams: RaycastParams = new RaycastParams();
-		rcParams.FilterType = Enum.RaycastFilterType.Exclude;
-		rcParams.FilterDescendantsInstances = model.GetChildren();
-		rcParams.CollisionGroup = "Player";
-
 		this.walking_tween = Tween(
 			distance / SPEED,
 			Linear,
 			(dist) => {
-				const origin = dist.mul(new Vector3(1, 0, 1)).add(new Vector3(0, model.PrimaryPart!.Position.Y + 1, 0));
-				const raycastResult = Workspace.Raycast(origin, Vector3.yAxis.mul(-10), rcParams);
-				const goal = dist.mul(new Vector3(1, 0, 1)).add(raycastResult?.Position!.mul(Vector3.yAxis)!);
-				model.PivotTo(new CFrame(goal, goal.add(delta)));
+				model.PivotTo(CFrame.lookAlong(dist, lookDelta));
 			},
 			model.GetPivot().Position,
-			model.GetPivot().Position.add(delta),
+			end_point,
 		);
 		this.walking_tween.Wait();
+		this.climb_anim.Stop(0);
 	}
 
 	public walking_tween: PseudoTween | undefined;
 	public current_player!: Player;
 	public GridSize!: number;
+	public tileOn?: PathTile;
+
 	private Move(goal: Vector3) {
-		const path = this.Object.GetTileInfo.Invoke(goal) as string;
-		const animator = this.Object.FindFirstChild("Animator", true) as Animator;
-		const walk_track = this.Object.FindFirstChild("Walk", true) as Animation;
-		const anim = animator.LoadAnimation(walk_track);
-		anim.Play();
+		const path = this.Object.GetTileInfo.Invoke(goal) as Part[];
+		task.wait(0);
+
+		this.Object.SetAttribute("Position", goal);
+		this.walk_anim.Play();
 		this.Trove.add(
 			task.spawn(() => {
-				for (const c of [...path]) {
-					this.move_model(this.Object, letter_to_dir(c)!, this.GridSize);
-				}
+				this.tileOn?.left(this);
+				path.forEach((v, i) => {
+					this.tileOn?.steppedOut(this);
+					this.tileOn = undefined;
+					this.move_model(this.Object, v, path[i - 1]);
+					if (v.HasTag("PathNode")) {
+						const tile = Components.Get<PathTile>(TileConstructor.pathnode_to_class(v), v);
+						this.tileOn = tile;
+						tile!.steppedIn(this);
+					}
+				});
 				this.Object.ClickDetector.MaxActivationDistance = 1e5;
-				anim.Stop();
+				this.walk_anim.Stop();
+				this.tileOn!.landed(this);
 				remotes.avatar_selected.fire(this.current_player, undefined);
-				this.Object.SetAttribute("Position", goal);
 				this.Object.MoveFinished.Fire();
 			}),
 		);
@@ -89,6 +95,7 @@ export class Avatar extends TagComponent<AvatarClass> {
 		if (!this.Object.IsDescendantOf(Workspace)) {
 			return;
 		}
+		this.climb_anim.Priority = Enum.AnimationPriority.Action;
 		this.Trove.add(this.Object);
 		this.Trove.add(
 			this.Object.ClickDetector.MouseClick.Connect((player) => {
@@ -98,8 +105,5 @@ export class Avatar extends TagComponent<AvatarClass> {
 				//this.selected();
 			}),
 		);
-	}
-	Stop(): void {
-		this.walking_tween?.Cancel();
 	}
 }
