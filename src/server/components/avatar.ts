@@ -45,13 +45,16 @@ export class Avatar extends TagComponent<AvatarClass> {
 	}
 
 	public walking_tween: PseudoTween | undefined;
-	public current_player!: Player;
+	public player!: Player;
 	public GridSize!: number;
 	public tileOn?: PathTile;
 
+	public get_tile_info!: (pos : Vector3) => Part[]
+	public attack_tile!: (pos: Vector3) => void;
+	public place_boulder!: (pos: Vector3) => void;
+
 	private Move(goal: Vector3) {
-		const path = this.Object.GetTileInfo.Invoke(goal) as Part[];
-		task.wait(0);
+		const path = this.get_tile_info(goal) as Part[];
 
 		this.Object.SetAttribute("Position", goal);
 		this.walk_anim.Play();
@@ -71,23 +74,52 @@ export class Avatar extends TagComponent<AvatarClass> {
 				this.Object.ClickDetector.MaxActivationDistance = 1e5;
 				this.walk_anim.Stop();
 				this.tileOn!.landed(this);
-				remotes.avatar_selected.fire(this.current_player, undefined);
+				remotes.avatar_selected.fire(this.player, false);
 				this.Object.MoveFinished.Fire();
 			}),
 		);
 	}
 
+	private Boulder(goal: Vector3) {
+		//TODO: place boulder
+		this.place_boulder(goal);
+		this.Object.MoveFinished.Fire();
+	}
+
+	private Attack(goal: Vector3) {
+		this.attack_tile(goal);
+		this.Object.MoveFinished.Fire();
+	}
+
 	public selected() {
-		remotes.avatar_selected.fire(this.current_player, this.Object);
+		remotes.avatar_selected.fire(this.player, true);
 		this.Object.ClickDetector.MaxActivationDistance = 0;
 		let goal: Vector3;
+		let action: string;
 		this.Trove.addPromise(
 			remotes.avatar_option_selected
 				.promise(
-					(p) => p === this.current_player,
-					(_, n) => (goal = n),
+					(p) => p === this.player,
+					(_, n: Vector3, _action: string) => {
+						goal = n;
+						action = _action;
+					},
 				)
-				.andThenCall(() => this.Move(goal)),
+				.andThenCall(() => {
+					switch (action) {
+						case "Move":
+							this.Move(goal);
+							break;
+						case "Boulder":
+							this.Boulder(goal);
+							break;
+						case "Attack":
+							this.Attack(goal);
+							break;
+						default:
+							error("wrong value passed?");
+					}
+				}),
 		).await();
 	}
 
@@ -96,14 +128,6 @@ export class Avatar extends TagComponent<AvatarClass> {
 			return;
 		}
 		this.climb_anim.Priority = Enum.AnimationPriority.Action;
-		this.Trove.add(this.Object);
-		this.Trove.add(
-			this.Object.ClickDetector.MouseClick.Connect((player) => {
-				if (this.current_player !== player) {
-					return;
-				}
-				//this.selected();
-			}),
-		);
+		this.Trove.attachToInstance(this.Object);
 	}
 }

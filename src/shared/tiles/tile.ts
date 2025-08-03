@@ -5,9 +5,10 @@ import { HealthCube } from "shared/tileobjects/Healthcube";
 import { TileObject } from "shared/tileobjects/TileObject";
 
 export class PathTile extends TagComponent<Part> {
+	
 	public direction!: Direction;
 
-	public contents: Model[] = []
+	public avatar? : Avatar
 	
 	public tile_objects: TileObject[] = []
 
@@ -104,21 +105,37 @@ export class PathTile extends TagComponent<Part> {
 	}
 
 	public landed(avatar : Avatar) {
-		this.contents.push(avatar.Object);
+		this.avatar = avatar;
 	}
 
 	public left(avatar : Avatar) {
-		print('left',this.Object);
-		this.contents.unorderedRemove(this.contents.findIndex((v) => v === avatar.Object))
+		this.avatar = undefined
 	}
 
-	public add(healthCube : TileObject) {
-		healthCube.Object.Parent = this.Object
-		healthCube.Object.PivotTo(this.Object.GetPivot())
-		this.tile_objects.push(healthCube);
+	public add(tileObject : TileObject) {
+		tileObject.Object.Parent = this.Object
+		tileObject.Object.PivotTo(this.Object.GetPivot())
+		this.tile_objects.push(tileObject);
+	}
+
+	public remove() {
+		this.tile_objects.forEach(element => {
+			element.Object.Destroy();
+		});
+		this.tile_objects.clear();
 	}
 
 	public canTraverse() : boolean {
-		return this.contents.every((v) => !v.HasTag("Avatar"));
+		if (this.tile_objects.some((v) => v.obstructs())) {
+			return false;
+		}
+		return this.avatar === undefined;
+	}
+
+	public isEmpty() {
+		if (this.avatar) {
+			return false;
+		}
+		return this.tile_objects.isEmpty();
 	}
 }

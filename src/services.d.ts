@@ -5,7 +5,7 @@ interface Workspace extends Instance {
 	Hurt: Part & {
 		PointLight: PointLight;
 	};
-	MatchOrigin : MatchClass;
+	MatchOrigin: MatchClass;
 }
 
 interface MatchClass extends Part {
@@ -20,35 +20,34 @@ interface PathNode extends Part {
 }
 
 interface MatchSpawnerI extends Part {
-	ClickDetector : ClickDetector;
+	ClickDetector: ClickDetector;
 }
 
 interface AvatarClass extends Model {
 	ClickDetector: ClickDetector;
-	GetTileInfo: BindableFunction;
-	GetTiles: RemoteFunction;
 	Humanoid: Humanoid;
-	MoveFinished : BindableEvent;
+	MoveFinished: BindableEvent;
 }
 
 interface ReplicatedStorage extends Instance {
 	Mini: AvatarClass;
-	Tiles : Folder & {
-		DoubleDecker : Model;
-		Flat : Model;
-		Slope : Model & {
-			pathnode : Part;
+	Tiles: Folder & {
+		DoubleDecker: Model;
+		Flat: Model;
+		Slope: Model & {
+			pathnode: Part;
 		};
-		Ladder : Model & {
-			pathnode : Part;
-		}
-		Solid : Model;
-		Wall : Model;
-		Ceiling : Model;
-		Elevator : Model;
-	}
-	TileObjects : Folder & {
-		HealthCube : Model;
-		Spike : Model;
-	}
+		Ladder: Model & {
+			pathnode: Part;
+		};
+		Solid: Model;
+		Wall: Model;
+		Ceiling: Model;
+		Elevator: Model;
+	};
+	TileObjects: Folder & {
+		HealthCube: Model;
+		Spike: Model;
+		Boulder: Model;
+	};
 }

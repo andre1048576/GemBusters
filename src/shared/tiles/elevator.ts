@@ -26,13 +26,13 @@ export class Elevator extends PathTile {
 		const old_parent = avatar.Object.Parent!;
 		avatar.Object.Parent = this.Object;
 		Tween(
-			2,
+			1,
 			Linear,
 			(dist) => this.Object.PivotTo(CFrame.lookAlong(dist, this.Object.GetPivot().LookVector)),
 			this.Object.GetPivot().Position,
 			this.Object.GetPivot().Position.add(goal),
 		).Wait();
 		avatar.Object.Parent = old_parent;
-        this.recalculate_callback();
+		this.recalculate_callback();
 	}
 }

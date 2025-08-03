@@ -96,14 +96,14 @@ export class BoardString {
 export const board1: BoardString = new BoardString(`
 __________
 __________
-______FFF_
+__v___FFF_
 _FFE__22F_
 _FF__>F2F_
 _EE__>F2F_
 ______F2F_
-CCC__→22F_
+WCC__→22F_
 22C__→2←__
-E2C_______
+E2W_______
 `);
 
 /*

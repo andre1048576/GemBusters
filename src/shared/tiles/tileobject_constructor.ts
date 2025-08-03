@@ -1,3 +1,4 @@
+import { Boulder } from "shared/tileobjects/Boulder";
 import { HealthCube } from "shared/tileobjects/Healthcube";
 import { Spike } from "shared/tileobjects/Spike";
 
@@ -8,6 +9,8 @@ export class TileObjectConstructor {
 				return HealthCube;
 			case "Spike":
 				return Spike;
+			case "Boulder":
+				return Boulder;
 		}
 		error("huh");
 	}

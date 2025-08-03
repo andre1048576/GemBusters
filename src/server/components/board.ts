@@ -8,32 +8,45 @@ import { ReplicatedStorage, Workspace } from "@rbxts/services";
 import { HealthCube } from "shared/tileobjects/Healthcube";
 import { Spike } from "shared/tileobjects/Spike";
 import { TileObject } from "shared/tileobjects/TileObject";
+import { Boulder } from "shared/tileobjects/Boulder";
 
 const BASE_SIZE = 8;
 
-const HEALTH_CUBE_POS = [new Vector3(8,0,0),new Vector3(8,1,2),new Vector3(1,0,1),new Vector3(0,0,9)]
+const HEALTH_CUBE_POS = [new Vector3(8, 0, 0), new Vector3(8, 1, 2), new Vector3(7, 0, 5), new Vector3(0, 0, 9)];
 
-const SPIKE_POS = [new Vector3(2,0,2),new Vector3(0,1,8),new Vector3(1,1,9)]
+const SPIKE_POS = [new Vector3(2, 0, 2), new Vector3(0, 1, 8), new Vector3(1, 1, 9)];
+
+const BOULDER_POS = [new Vector3(2, 1, 3)];
 
 const construct_health_cube = () => {
 	const cube_model = ReplicatedStorage.TileObjects.HealthCube.Clone();
 	cube_model.Parent = Workspace;
-	const [success,health_cube] = Components.Instantiate<TileObject>(HealthCube,cube_model).await();
+	const [success, health_cube] = Components.Instantiate<TileObject>(HealthCube, cube_model).await();
 	if (!success) {
 		error("wtf");
 	}
-	return health_cube; 
-}
+	return health_cube;
+};
 
 const construct_spike = () => {
 	const cube_model = ReplicatedStorage.TileObjects.Spike.Clone();
 	cube_model.Parent = Workspace;
-	const [success,health_cube] = Components.Instantiate<TileObject>(Spike,cube_model).await();
+	const [success, health_cube] = Components.Instantiate<TileObject>(Spike, cube_model).await();
 	if (!success) {
 		error("wtf");
 	}
-	return health_cube; 
-}
+	return health_cube;
+};
+
+const construct_boulder = () => {
+	const cube_model = ReplicatedStorage.TileObjects.Boulder.Clone();
+	cube_model.Parent = Workspace;
+	const [success, health_cube] = Components.Instantiate<TileObject>(Boulder, cube_model).await();
+	if (!success) {
+		error("wtf");
+	}
+	return health_cube;
+};
 
 export class Board extends TagComponent<Folder> {
 	public pathNodes: PathTile[] = [];
@@ -77,7 +90,7 @@ export class Board extends TagComponent<Folder> {
 					if (!success) {
 						error("what");
 					}
-					
+
 					pathTile.direction = node.GetAttribute("Direction") as Direction;
 					rowNodes[(node.GetAttribute("Position") as Vector3).Y] = pathTile;
 					this.pathNodes.push(pathTile);
@@ -93,14 +106,25 @@ export class Board extends TagComponent<Folder> {
 					} else if (SPIKE_POS.includes(node.GetAttribute("Position") as Vector3)) {
 						const spike = construct_spike();
 						pathTile.add(spike);
+					} else if (BOULDER_POS.includes(node.GetAttribute("Position") as Vector3)) {
+						const boulder = construct_boulder();
+						pathTile.add(boulder);
 					}
-
 				});
 				columnNodes.push(rowNodes);
 			});
 			this.Nodes.push(columnNodes);
 		});
 		this.recalculate_paths();
+	}
+
+	public add_boulder_to_board(pos: Vector3) {
+		const boulder = construct_boulder();
+		this.Nodes[pos.Z][pos.X][pos.Y].add(boulder);
+	}
+
+	public remove_objects_from_tile(pos: Vector3) {
+		this.Nodes[pos.Z][pos.X][pos.Y].remove();
 	}
 
 	public add_to_board(avatar: Avatar, avatar_spawn_pos: Vector3) {
@@ -114,13 +138,11 @@ export class Board extends TagComponent<Folder> {
 		this.Nodes[current_position.Z][current_position.X].remove(current_position.Y);
 		this.Nodes[new_position.Z][new_position.X][new_position.Y] = tile;
 		tile.Object.SetAttribute("Position", new_position);
-		tile.contents.forEach((element) => {
-			element.SetAttribute("Position", new_position);
-		});
+		tile.avatar?.Object.SetAttribute("Position", new_position);
 	}
 
-	public get_tile(pos : Vector3) {
-		return this.Nodes[pos.Z][pos.X][pos.Y]
+	public get_tile(pos: Vector3) {
+		return this.Nodes[pos.Z][pos.X][pos.Y];
 	}
 
 	public recalculate_paths() {
@@ -170,9 +192,8 @@ export class Board extends TagComponent<Folder> {
 	/**
 	 * pathfind
 	 */
-	public pathfind(avatar: AvatarClass) {
+	public pathfind(avatar: AvatarClass, distance: number, validator: (arg0: PathTile) => boolean) {
 		const avatar_pos = avatar.GetAttribute("Position") as Vector3;
-		let distance = 5;
 		this.paths = new Map();
 		let root = this.Nodes[avatar_pos.Z][avatar_pos.X][avatar_pos.Y];
 		let checking: [PathTile, number, Part[]][] = [[root, distance, []]];
@@ -181,7 +202,7 @@ export class Board extends TagComponent<Folder> {
 			const [current_tile, distance, path] = checking.shift()!;
 			this.get_adjacent(current_tile.Object.GetAttribute("Position") as Vector3)
 				?.filter((partTuple) => !valid.includes(partTuple[0]))
-				.filter((partTuple) => partTuple[0].canTraverse())
+				.filter((partTuple) => validator(partTuple[0]))
 				.forEach((partTuple) => {
 					const [next_tile, direction] = partTuple;
 					let pathClone = path;
