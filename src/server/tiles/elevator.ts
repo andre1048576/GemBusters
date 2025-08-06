@@ -1,7 +1,7 @@
 import { Direction } from "shared/path";
 import { PathTile } from "./tile";
 import { Linear } from "@rbxts/easing-functions";
-import type { Avatar } from "server/components/avatar";
+import { Avatar } from "server/components/avatar";
 import Tween from "@rbxts/tween";
 
 export class Elevator extends PathTile {

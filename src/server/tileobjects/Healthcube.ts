@@ -12,8 +12,7 @@ export class HealthCube extends TileObject {
     }
 
     public steppedIn(Avatar : Avatar) {
-        const humanoid = Avatar.Object.FindFirstChildOfClass("Humanoid")!
-        humanoid.Health = math.clamp(humanoid.Health+10,0,100);
+        Avatar.modify_health(1)
         this.cube.Transparency = 1;
     }
 

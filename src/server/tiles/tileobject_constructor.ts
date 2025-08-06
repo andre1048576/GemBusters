@@ -1,6 +1,6 @@
-import { Boulder } from "shared/tileobjects/Boulder";
-import { HealthCube } from "shared/tileobjects/Healthcube";
-import { Spike } from "shared/tileobjects/Spike";
+import { Boulder } from "server/tileobjects/Boulder";
+import { HealthCube } from "server/tileobjects/Healthcube";
+import { Spike } from "server/tileobjects/Spike";
 
 export class TileObjectConstructor {
 	public static pathnode_to_class(p: Part) {

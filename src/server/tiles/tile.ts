@@ -1,8 +1,8 @@
 import { TagComponent } from "@rbxts/component";
 import { Direction, direction_to_name, opposite_direction } from "shared/path";
 import type { Avatar } from "server/components/avatar";
-import { HealthCube } from "shared/tileobjects/Healthcube";
-import { TileObject } from "shared/tileobjects/TileObject";
+import { HealthCube } from "server/tileobjects/Healthcube";
+import { TileObject } from "server/tileobjects/TileObject";
 
 export class PathTile extends TagComponent<Part> {
 	
@@ -129,7 +129,7 @@ export class PathTile extends TagComponent<Part> {
 		if (this.tile_objects.some((v) => v.obstructs())) {
 			return false;
 		}
-		return this.avatar === undefined;
+		return !this.avatar;
 	}
 
 	public isEmpty() {

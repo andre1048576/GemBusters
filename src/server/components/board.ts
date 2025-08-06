@@ -1,14 +1,14 @@
 import { TagComponent, Components } from "@rbxts/component";
 import { board1 } from "shared/boards";
 import { Direction } from "shared/path";
-import { PathTile } from "../../shared/tiles/tile";
-import { TileConstructor } from "shared/tiles/tile_constructor";
+import { PathTile } from "../tiles/tile";
+import { TileConstructor } from "server/tiles/tile_constructor";
 import { Avatar } from "./avatar";
 import { ReplicatedStorage, Workspace } from "@rbxts/services";
-import { HealthCube } from "shared/tileobjects/Healthcube";
-import { Spike } from "shared/tileobjects/Spike";
-import { TileObject } from "shared/tileobjects/TileObject";
-import { Boulder } from "shared/tileobjects/Boulder";
+import { HealthCube } from "server/tileobjects/Healthcube";
+import { Spike } from "server/tileobjects/Spike";
+import { TileObject } from "server/tileobjects/TileObject";
+import { Boulder } from "server/tileobjects/Boulder";
 
 const BASE_SIZE = 8;
 
@@ -189,11 +189,25 @@ export class Board extends TagComponent<Folder> {
 		return this.node_adjacencies.get(pos);
 	};
 
+	public pathfind_existing_path(start : Vector3,steps : Direction[]) : Part[] {
+		let path : Part[] = []
+		let current = this.Nodes[start.Z][start.X][start.Y];
+		steps.forEach(direction => {
+			const [next_tile] = this.get_adjacent(current.Object.GetAttribute("Position") as Vector3)?.find(([_,d]) => d === direction)!
+			path = [
+				...path,
+				...current.get_direction_tiles(direction,false),
+				...next_tile.get_direction_tiles(direction,true)
+			]
+			current = next_tile;
+		});
+		return path;
+	}
 	/**
 	 * pathfind
 	 */
-	public pathfind(avatar: AvatarClass, distance: number, validator: (arg0: PathTile) => boolean) {
-		const avatar_pos = avatar.GetAttribute("Position") as Vector3;
+	public pathfind(avatar: Avatar, distance: number, validator: (arg0: PathTile) => boolean) {
+		const avatar_pos = avatar.Object.GetAttribute("Position") as Vector3;
 		this.paths = new Map();
 		let root = this.Nodes[avatar_pos.Z][avatar_pos.X][avatar_pos.Y];
 		let checking: [PathTile, number, Part[]][] = [[root, distance, []]];
