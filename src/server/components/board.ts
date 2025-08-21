@@ -1,52 +1,13 @@
 import { TagComponent, Components } from "@rbxts/component";
-import { board1 } from "shared/boards";
 import { Direction } from "shared/path";
 import { PathTile } from "../tiles/tile";
 import { TileConstructor } from "server/tiles/tile_constructor";
 import { Avatar } from "./avatar";
-import { ReplicatedStorage, Workspace } from "@rbxts/services";
-import { HealthCube } from "server/tileobjects/Healthcube";
-import { Spike } from "server/tileobjects/Spike";
-import { TileObject } from "server/tileobjects/TileObject";
-import { Boulder } from "server/tileobjects/Boulder";
+import { getBoard } from "server/boards";
+import { construct_boulder } from "server/tiles/tileobject_constructor";
 
 const BASE_SIZE = 8;
 
-const HEALTH_CUBE_POS = [new Vector3(8, 0, 0), new Vector3(8, 1, 2), new Vector3(7, 0, 5), new Vector3(0, 0, 9)];
-
-const SPIKE_POS = [new Vector3(2, 0, 2), new Vector3(0, 1, 8), new Vector3(1, 1, 9)];
-
-const BOULDER_POS = [new Vector3(2, 1, 3)];
-
-const construct_health_cube = () => {
-	const cube_model = ReplicatedStorage.TileObjects.HealthCube.Clone();
-	cube_model.Parent = Workspace;
-	const [success, health_cube] = Components.Instantiate<TileObject>(HealthCube, cube_model).await();
-	if (!success) {
-		error("wtf");
-	}
-	return health_cube;
-};
-
-const construct_spike = () => {
-	const cube_model = ReplicatedStorage.TileObjects.Spike.Clone();
-	cube_model.Parent = Workspace;
-	const [success, health_cube] = Components.Instantiate<TileObject>(Spike, cube_model).await();
-	if (!success) {
-		error("wtf");
-	}
-	return health_cube;
-};
-
-const construct_boulder = () => {
-	const cube_model = ReplicatedStorage.TileObjects.Boulder.Clone();
-	cube_model.Parent = Workspace;
-	const [success, health_cube] = Components.Instantiate<TileObject>(Boulder, cube_model).await();
-	if (!success) {
-		error("wtf");
-	}
-	return health_cube;
-};
 
 export class Board extends TagComponent<Folder> {
 	public pathNodes: PathTile[] = [];
@@ -60,7 +21,7 @@ export class Board extends TagComponent<Folder> {
 	public paths!: Map<Vector3, Part[]>;
 
 	Start(): void {
-		const board = board1.construct();
+		const [board,objects] = getBoard();
 		this.GridY = board.size();
 		this.GridX = board[0].size();
 
@@ -100,21 +61,17 @@ export class Board extends TagComponent<Folder> {
 					pathTile.move_tile = (tile: PathTile, delta: Vector3) => {
 						this.move_tile(tile, delta);
 					};
-					if (HEALTH_CUBE_POS.includes(node.GetAttribute("Position") as Vector3)) {
-						const health_cube = construct_health_cube();
-						pathTile.add(health_cube);
-					} else if (SPIKE_POS.includes(node.GetAttribute("Position") as Vector3)) {
-						const spike = construct_spike();
-						pathTile.add(spike);
-					} else if (BOULDER_POS.includes(node.GetAttribute("Position") as Vector3)) {
-						const boulder = construct_boulder();
-						pathTile.add(boulder);
-					}
 				});
 				columnNodes.push(rowNodes);
 			});
 			this.Nodes.push(columnNodes);
 		});
+
+		objects.forEach((tileObject) => {
+			const pos = tileObject.position!
+			this.Nodes[pos.Z][pos.X][pos.Y].add(tileObject);
+		})
+
 		this.recalculate_paths();
 	}
 

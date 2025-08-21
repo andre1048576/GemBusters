@@ -1,22 +1,19 @@
 import { TagComponent } from "@rbxts/component";
 import { Direction, direction_to_name, opposite_direction } from "shared/path";
 import type { Avatar } from "server/components/avatar";
-import { HealthCube } from "server/tileobjects/Healthcube";
 import { TileObject } from "server/tileobjects/TileObject";
 
 export class PathTile extends TagComponent<Part> {
-	
 	public direction!: Direction;
 
-	public avatar? : Avatar
-	
-	public tile_objects: TileObject[] = []
+	public avatar?: Avatar;
 
-	public recalculate_callback! : () => void;
-	public move_tile! : (tile: PathTile,delta : Vector3) => void;
+	public tile_objects: TileObject[] = [];
 
-	Initialize(): void {
-	}
+	public recalculate_callback!: () => void;
+	public move_tile!: (tile: PathTile, delta: Vector3) => void;
+
+	Initialize(): void {}
 
 	public global_to_relative_direction(direction: Direction) {
 		switch (this.direction) {
@@ -75,13 +72,13 @@ export class PathTile extends TagComponent<Part> {
 		if (reverse) {
 			lDirection = opposite_direction(lDirection);
 		}
-		let path = this.Object.FindFirstChild(direction_to_name(lDirection))?.GetChildren() as Part[];
+		let path = this.Object.FindFirstChild(direction_to_name(lDirection))!.GetChildren() as Part[];
 		if (!reverse) {
-		let _path : Part[] = []
-		path.forEach(element => {
-			_path.unshift(element);
-		}); 
-		path = _path;
+			let _path: Part[] = [];
+			path.forEach((element) => {
+				_path.unshift(element);
+			});
+			path = _path;
 		} else {
 			path.push(this.Object);
 		}
@@ -90,42 +87,42 @@ export class PathTile extends TagComponent<Part> {
 
 	public path_direction(Gdirection: Direction): string {
 		error("why was this called!!");
-	};
+	}
 
-	public steppedIn(avatar : Avatar) {
-		this.tile_objects.forEach(element => {
+	public steppedIn(avatar: Avatar) {
+		this.tile_objects.forEach((element) => {
 			element.steppedIn(avatar);
 		});
 	}
 
-	public steppedOut(avatar : Avatar) {
-		this.tile_objects.forEach(element => {
+	public steppedOut(avatar: Avatar) {
+		this.tile_objects.forEach((element) => {
 			element.steppedOut(avatar);
 		});
 	}
 
-	public landed(avatar : Avatar) {
+	public landed(avatar: Avatar) {
 		this.avatar = avatar;
 	}
 
-	public left(avatar : Avatar) {
-		this.avatar = undefined
+	public left(avatar: Avatar) {
+		this.avatar = undefined;
 	}
 
-	public add(tileObject : TileObject) {
-		tileObject.Object.Parent = this.Object
-		tileObject.Object.PivotTo(this.Object.GetPivot())
+	public add(tileObject: TileObject) {
+		tileObject.Object.Parent = this.Object;
+		tileObject.Object.PivotTo(this.Object.GetPivot());
 		this.tile_objects.push(tileObject);
 	}
 
 	public remove() {
-		this.tile_objects.forEach(element => {
+		this.tile_objects.forEach((element) => {
 			element.Object.Destroy();
 		});
 		this.tile_objects.clear();
 	}
 
-	public canTraverse() : boolean {
+	public canTraverse(): boolean {
 		if (this.tile_objects.some((v) => v.obstructs())) {
 			return false;
 		}

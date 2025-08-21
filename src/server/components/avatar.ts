@@ -112,13 +112,13 @@ export class Avatar extends TagComponent<AvatarClass> {
 	public selected() {
 		remotes.avatar_selected.fire(this.player, true,this.Object);
 		this.Object.ClickDetector.MaxActivationDistance = 0;
-		let goal: Vector3 | Direction[];
+		let goal: any;
 		let action: string;
 		this.Trove.addPromise(
 			remotes.avatar_option_selected
 				.promise(
-					(p,_,_2) => p === this.player,
-					(p,m_type,_goal) => {
+					(p,_1,_?) => p === this.player,
+					(_,m_type,_goal?) => {
 						goal = _goal
 						action = m_type;
 					}
@@ -134,11 +134,18 @@ export class Avatar extends TagComponent<AvatarClass> {
 						case "Attack":
 							this.Attack(goal as Vector3);
 							break;
+						case "Rest":
+							this.Rest();
+							break;
 						default:
 							error("wrong value passed?");
 					}
 				}),
 		).await();
+	}
+	Rest() {
+		this.modify_energy(999);
+		this.Object.MoveFinished.Fire();
 	}
 
 	public Initialize(): void {

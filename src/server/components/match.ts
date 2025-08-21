@@ -109,14 +109,20 @@ export class Match extends TagComponent<MatchClass> {
 		});
 
 		remotes.get_adjacencies.onRequest((player) => {
-			const output : [pos : Vector3,destinations : [Part,Direction][]][] = []
+			const output : [pos : Vector3,destinations : [Part,Direction,Part[]][]][] = []
 			this.board.node_adjacencies.forEach((adj,pos) => {
-				output.push([pos,adj.filter(([p]) => p.canTraverse() || p.avatar?.player === player).map(([p,d]) => [p.Object,d])])
+				output.push([pos,adj.filter(([p]) => p.canTraverse() || p.avatar?.player === player).map(([p,d]) => [p.Object,d,board.pathfind_existing_path(pos,[d])])])
 			})
 			return output;
 		})
 
 		remotes.enter_match.firePlayers(this.players, this.players);
+
+		this.Trove.add(Players.PlayerRemoving.Connect((p) => {
+			if (this.players.includes(p)) {
+				this.Destroy();
+			}
+		}))
 
 		task.spawn(() => {
 			let index = 0;

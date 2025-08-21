@@ -14,6 +14,7 @@ export class Elevator extends PathTile {
 
 	public landed(avatar: Avatar): void {
 		super.landed(avatar);
+		//hardlocked at 8 because that is the current grid size
 		let goal = new Vector3(0, 8, 0);
 		if (this.Object.HasTag("Raised")) {
 			this.Object.RemoveTag("Raised");

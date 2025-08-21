@@ -13,8 +13,6 @@ enum Page {
 
 const trove = new Trove();
 
-const can_confirm_bindable = new Instance("BindableEvent")
-
 interface MainPageOptionProps {
 	onClick: () => any;
 	name: string;
@@ -27,11 +25,12 @@ interface MainPageProps {
 	onMoveClick: () => any;
 	onBoulderClick: () => any;
 	onAttackClick: () => any;
+	onRestClick: () => any;
 }
 
-function MainPage({ onMoveClick, onAttackClick, onBoulderClick }: MainPageProps) {
+function MainPage({ onMoveClick, onAttackClick, onBoulderClick, onRestClick }: MainPageProps) {
 	return (
-		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
+		<scrollingframe Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1} ScrollingDirection={"X"} ClipsDescendants={false} CanvasSize={UDim2.fromScale(2,1)}>
 			<MainPageOption
 				onClick={onMoveClick}
 				name="Move"
@@ -53,7 +52,14 @@ function MainPage({ onMoveClick, onAttackClick, onBoulderClick }: MainPageProps)
 				description="Deploy a Rock to impede enemies."
 				energy_cost={2}
 			/>
-		</frame>
+			<MainPageOption
+				onClick={onRestClick}
+				name="Rest"
+				xCoordinate={3}
+				description="Replenish your ⚡, but you take +1 damage from all sources until your next turn."
+				energy_cost={0}
+			/>
+		</scrollingframe>
 	);
 }
 
@@ -76,7 +82,7 @@ function MainPageOption({ onClick, name, xCoordinate, description, energy_cost }
 			BackgroundColor3={new Color3(1, 1, 1)}
 			AnchorPoint={new Vector2(0.5, 0)}
 			Size={yPos.map((t) => UDim2.fromScale(0.2, lerp(1, 3, t)))}
-			Position={yPos.map((t) => UDim2.fromScale(0.25 + xCoordinate * 0.25, lerp(0, -2, t)))}
+			Position={yPos.map((t) => UDim2.fromScale(0.25-.125 + xCoordinate * 0.25, lerp(0, -2, t)))}
 			Event={{
 				Activated: onClick,
 				MouseEnter: () => yPosMotor.spring(1, config.spring.gentle),
@@ -108,47 +114,44 @@ function MainPageOption({ onClick, name, xCoordinate, description, energy_cost }
 interface BackPageProps {
 	onClick: () => any;
 	onConfirmClick: () => any;
-	canConfirm : Binding<boolean>
+	canConfirm: Binding<boolean>;
 }
 
-function BackPage({ onClick,canConfirm,onConfirmClick }: BackPageProps) {
-	const confirm_color = canConfirm.map((v) => v ? Color3.fromRGB(13,232,41) : Color3.fromRGB(237,13,13))
+function BackPage({ onClick, canConfirm, onConfirmClick }: BackPageProps) {
+	const confirm_color = canConfirm.map((v) => (v ? Color3.fromRGB(13, 232, 41) : Color3.fromRGB(237, 13, 13)));
 	return (
-		<frame
-		Size={UDim2.fromScale(1,1)}
-		BackgroundTransparency={1}>
-		<textbutton
-			BackgroundColor3={new Color3(1, 1, 1)}
-			TextScaled={true}
-			Size={UDim2.fromScale(.5, 1)}
-			Text={"BACK"}
-			Event={{
-				Activated: onClick,
-			}}
-		></textbutton>
-		<textbutton
-			BackgroundColor3={confirm_color}
-			TextScaled={true}
-			Position={UDim2.fromScale(.5,0)}
-			Size={UDim2.fromScale(.5, 1)}
-			Text={"CONFIRM"}
-			Active={canConfirm}
-			Event={{
-				Activated: onConfirmClick,
-			}}
-		></textbutton>
+		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
+			<textbutton
+				BackgroundColor3={new Color3(1, 1, 1)}
+				TextScaled={true}
+				Size={UDim2.fromScale(0.5, 1)}
+				Text={"BACK"}
+				Event={{
+					Activated: onClick,
+				}}
+			></textbutton>
+			<textbutton
+				BackgroundColor3={confirm_color}
+				TextScaled={true}
+				Position={UDim2.fromScale(0.5, 0)}
+				Size={UDim2.fromScale(0.5, 1)}
+				Text={"CONFIRM"}
+				Active={canConfirm}
+				Event={{
+					Activated: onConfirmClick,
+				}}
+			></textbutton>
 		</frame>
 	);
 }
 
-const path : Direction[] = [];
+const path: Direction[] = [];
 
 export function AvatarUI() {
 	const [visible, _setVisible] = useState(false);
 	const [visiblePage, _setVisiblePage] = useState(Page.Primary);
 	const [avatar, setAvatar] = useState<AvatarClass | undefined>(undefined);
-	const [canConfirm,setCanConfirm] = useBinding(false);
-
+	const [canConfirm, setCanConfirm] = useBinding(false);
 
 	function setVisible(is_visible: boolean) {
 		_setVisible(is_visible);
@@ -173,10 +176,6 @@ export function AvatarUI() {
 	}
 	useEventListener(remotes.avatar_selected, onAvatarPassed);
 
-	useEventListener(can_confirm_bindable.Event,(canConfirm : boolean) => {
-		setCanConfirm(canConfirm)
-	})
-
 	function onMoveClick() {
 		trove.add(
 			task.spawn(() => {
@@ -185,14 +184,12 @@ export function AvatarUI() {
 				if (!success) {
 					error("failed to laod paths!?");
 				}
-				print(paths);
 				let avatar_pos = avatar?.GetAttribute("Position") as Vector3;
 				const adj_parts = paths.find(([v]) => v === avatar_pos)![1];
 				if (adj_parts.size() === 0) {
 					return;
 				}
-				const [adj_part,dir] = adj_parts[0]
-				print(adj_part,dir);
+				const [adj_part, dir] = adj_parts[0];
 				let temporary_tile: Part = paths
 					.find(([v]) => v === adj_part.GetAttribute("Position"))![1]
 					.find(([, d]) => d === opposite_direction(dir))![0];
@@ -202,37 +199,44 @@ export function AvatarUI() {
 				const tiles: Part[] = [];
 				const visible_path: Part[] = [];
 				path.clear();
-				function onHoveredPartClicked(tile: Part, direction: Direction) {
-					const new_pos = tile.GetAttribute("Position") as Vector3;
-					const worldSpace = tile.Position;
+				function onHoveredPartClicked(tile: Part, direction: Direction, steps: Part[]) {
 					if (path[path.size() - 1] === opposite_direction(direction)) {
 						path.pop();
 						temporary_tile = tiles.pop()!;
-						visible_path.pop()?.Destroy();
+						const pathSizeToRemove = visible_path[visible_path.size()-1].GetAttribute("PathSize")
+						while (!visible_path.isEmpty() && visible_path[visible_path.size()-1].GetAttribute("PathSize") === pathSizeToRemove)
+							visible_path.pop()?.Destroy();
 						temporary_worldspace = temporary_tile.Position;
 						if (path.size() === 0) {
-							setCanConfirm(false)
+							setCanConfirm(false);
 						}
 					} else {
-						setCanConfirm(true)
-						const new_part = new Instance("Part");
-						const midpoint = worldSpace.add(temporary_worldspace).div(2);
-						const thickness = 0.5;
-						new_part.CanCollide = false;
-						new_part.CanQuery = false;
-						new_part.CanTouch = false;
-						new_part.Anchored = true;
-						new_part.Material = Enum.Material.SmoothPlastic;
-						new_part.Size = new Vector3(
-							thickness,
-							thickness,
-							worldSpace.sub(temporary_worldspace).Magnitude,
-						);
-						trove.add(new_part);
-						new_part.CFrame = CFrame.lookAt(midpoint, worldSpace, Vector3.yAxis);
-						temporary_worldspace = worldSpace;
-						new_part.Parent = Workspace;
-						visible_path.push(new_part);
+						setCanConfirm(true);
+						steps.forEach((part) => {
+							const worldSpace = part.Position;
+							if (worldSpace !== temporary_worldspace) {
+								const new_part = new Instance("Part");
+								const midpoint = worldSpace.add(temporary_worldspace).div(2);
+								const thickness = 0.5;
+								new_part.CanCollide = false;
+								new_part.CanQuery = false;
+								new_part.CanTouch = false;
+								new_part.Anchored = true;
+								new_part.Material = Enum.Material.SmoothPlastic;
+								new_part.Size = new Vector3(
+									thickness,
+									thickness,
+									worldSpace.sub(temporary_worldspace).Magnitude,
+								);
+								trove.add(new_part);
+								new_part.CFrame = CFrame.lookAt(midpoint, worldSpace, Vector3.yAxis);
+								temporary_worldspace = worldSpace;
+								new_part.Parent = Workspace;
+								new_part.SetAttribute("PathSize",path.size());
+								visible_path.push(new_part);
+						}
+						});
+
 						tiles.push(temporary_tile);
 						temporary_tile = tile;
 						path.push(direction);
@@ -240,13 +244,16 @@ export function AvatarUI() {
 					bindable.Fire();
 				}
 				const part_trove = trove.extend();
-				const max_steps = avatar!.GetAttribute("Energy") as number
+				const max_steps = avatar!.GetAttribute("Energy") as number;
 				trove.add(
 					task.spawn(() => {
 						while (true) {
 							const tiles = paths.find(([v]) => v === temporary_tile.GetAttribute("Position"))![1];
-							for (const [tile, direction] of tiles) {
-								if (path.size() === max_steps && path[path.size() - 1] !== opposite_direction(direction)) {
+							for (const [tile, direction, steps] of tiles) {
+								if (
+									path.size() === max_steps &&
+									path[path.size() - 1] !== opposite_direction(direction)
+								) {
 									continue;
 								}
 								const part = new Instance("Part");
@@ -273,7 +280,7 @@ export function AvatarUI() {
 									() => (part.Color = part.GetAttribute("OldColor") as Color3),
 								);
 								clickDetector.Parent = part;
-								clickDetector.MouseClick.Connect(() => onHoveredPartClicked(tile, direction));
+								clickDetector.MouseClick.Connect(() => onHoveredPartClicked(tile, direction, steps));
 							}
 							bindable.Event.Wait();
 							part_trove.clean();
@@ -370,13 +377,18 @@ export function AvatarUI() {
 		);
 	}
 
+	function onRestClick() {
+				setVisible(false);
+		remotes.avatar_option_selected.fire("Rest");
+	}
+
 	function onBackPageClick() {
 		setVisiblePage(Page.Primary);
 	}
 
 	function onConfirmClick() {
 		setVisible(false);
-		remotes.avatar_option_selected("Move",path)
+		remotes.avatar_option_selected("Move", path);
 	}
 
 	if (!visible) {
@@ -387,7 +399,7 @@ export function AvatarUI() {
 		switch (page) {
 			case Page.Primary:
 				return (
-					<MainPage onMoveClick={onMoveClick} onAttackClick={onAttackClick} onBoulderClick={onBoulderClick} />
+					<MainPage onMoveClick={onMoveClick} onAttackClick={onAttackClick} onBoulderClick={onBoulderClick} onRestClick={onRestClick} />
 				);
 			case Page.Back:
 				return <BackPage onClick={onBackPageClick} canConfirm={canConfirm} onConfirmClick={onConfirmClick} />;
