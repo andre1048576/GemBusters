@@ -1,7 +1,7 @@
 import { ReplicatedStorage } from "@rbxts/services";
 import { Direction, Rotation } from "../shared/path";
 import { TileObject } from "./tileobjects/TileObject";
-import { TileObjectConstructor } from "./tiles/tileobject_constructor";
+import { TileObjectConstructor } from "./tileobjects/tileobject_constructor";
 
 export class BoardString {
 	private static char_to_tile(c: string): Model {
@@ -313,7 +313,6 @@ export function getBoard() {
 			outputObjects.push(o);
 		});
 	}
-	print(outputObjects);
 	return $tuple(outputTiles, outputObjects);
 }
 

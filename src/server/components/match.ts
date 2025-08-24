@@ -16,7 +16,7 @@ export class Match extends TagComponent<MatchClass> {
 
 	public Start(): void {
 		this.GridSize = this.Object.GetAttribute("TileSize") as number;
-		const centerCFrame = this.Object.CFrame.add(Vector3.yAxis).add(
+		const centerCFrame = this.Object.GetPivot().add(
 			new Vector3(this.GridSize / 2, 0, this.GridSize / 2),
 		);
 		const [success1, board] = Components.Instantiate(Board, this.Object.Tiles, "Board").await();
@@ -78,8 +78,8 @@ export class Match extends TagComponent<MatchClass> {
 				avatar.Object.SetAttribute("Energy",avatar.energy)
 				remotes.update_attribute.firePlayers(this.players,avatar.player,"Energy",avatar.energy)
 			}
-
 		});
+		
 		//TODO: TURN THIS INTO TWO EVENTS
 		remotes.pathfind.onRequest((p: Player, move_type: string) => {
 			const avatar = this.avatars.find((avatar) => avatar.player === p);

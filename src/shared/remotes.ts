@@ -4,6 +4,8 @@ import type { PathTile } from "../server/tiles/tile";
 import { bool } from "@rbxts/react/src/prop-types";
 import { Direction } from "./path";
 
+export type MoveOptions = "Attack" | "Move" | "Boulder" | "Rest"
+
 export const remotes = createRemotes(
     {
         avatar_selected : remote<Client,[currently_selected : boolean,avatar : AvatarClass | undefined]>(),

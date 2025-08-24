@@ -4,10 +4,12 @@ import { PathTile } from "../tiles/tile";
 import { TileConstructor } from "server/tiles/tile_constructor";
 import { Avatar } from "./avatar";
 import { getBoard } from "server/boards";
-import { construct_boulder } from "server/tiles/tileobject_constructor";
+import { construct_boulder } from "server/tileobjects/tileobject_constructor";
 
 const BASE_SIZE = 8;
 
+const palettes = {true: {true: new BrickColor("Sea green"),false: new BrickColor("Dark green")},false: {true: new BrickColor("Beige"),false: new BrickColor("Sand yellow")}}
+const palette_gray = {true : new BrickColor("Grey"),false: new BrickColor("Light yellow")}
 
 export class Board extends TagComponent<Folder> {
 	public pathNodes: PathTile[] = [];
@@ -36,12 +38,12 @@ export class Board extends TagComponent<Folder> {
 				tile.ScaleTo(this.GridSize / BASE_SIZE);
 				tile.PivotTo(
 					this.centerCFrame
-						.add(new Vector3((r - this.GridX / 2) * this.GridSize, 0, (c - this.GridY / 2) * this.GridSize))
+						.add(new Vector3((r) * this.GridSize, 0, (c) * this.GridSize))
 						.mul(CFrame.Angles(0, math.rad(tile.PrimaryPart!.Orientation.Y), 0)),
 				);
 				tile.Parent = this.Object;
-				tile.PrimaryPart!.Color =
-					r % 2 === c % 2 ? new BrickColor("Dark green").Color : new BrickColor("Sea green").Color;
+				tile.PrimaryPart!.Color = palettes[`${r.idiv(10)%2 === c.idiv(10)%2}`][`${r%2 === c%2}`].Color
+				tile.GetChildren().filter(p => p.IsA("BasePart")).filter(p => p !== tile.PrimaryPart).forEach(p => p.Color = palette_gray[`${r.idiv(10)%2 === c.idiv(10)%2}`].Color)
 				this.Trove.add(tile);
 				const p = tile.GetChildren().filter((node) => node.HasTag("PathNode")) as [Part];
 				let rowNodes: PathTile[] = [];
