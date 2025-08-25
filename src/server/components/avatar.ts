@@ -4,7 +4,7 @@ import { Workspace } from "@rbxts/services";
 import Tween, { PseudoTween } from "@rbxts/tween";
 import { PathTile } from "server/tiles/tile";
 import { TileConstructor } from "server/tiles/tile_constructor";
-import { remotes } from "../../shared/remotes";
+import { MoveOptions, remotes } from "../../shared/remotes";
 import { Direction } from "shared/path";
 
 export class Avatar extends TagComponent<AvatarClass> {
@@ -68,6 +68,7 @@ export class Avatar extends TagComponent<AvatarClass> {
 	public create_path!: (dirs : Direction[]) => Part[]
 	public attack_tile!: (pos: Vector3) => void;
 	public place_boulder!: (pos: Vector3) => void;
+	public get_tile!: (pos:Vector3) => PathTile;
 
 	private Move(dirs : Direction[]) {
 		const path = this.create_path(dirs) as Part[];
@@ -87,7 +88,6 @@ export class Avatar extends TagComponent<AvatarClass> {
 						tile!.steppedIn(this);
 					}
 				});
-				this.Object.ClickDetector.MaxActivationDistance = 1e5;
 				this.walk_anim.Stop();
 				this.tileOn!.landed(this);
 				remotes.avatar_selected.fire(this.player, false,undefined);
@@ -96,8 +96,20 @@ export class Avatar extends TagComponent<AvatarClass> {
 		);
 	}
 
+	private Jump(goal : Vector3) {
+		this.Object.SetAttribute("Position",goal);
+		this.tileOn?.left(this)
+		this.tileOn?.steppedOut(this);
+		const goal_tile = this.get_tile(goal);
+		this.tileOn = goal_tile;
+		this.Object.PivotTo(goal_tile.Object.GetPivot());
+		goal_tile.steppedIn(this);
+		goal_tile.landed(this);
+		this.Object.MoveFinished.Fire();
+		this.modify_energy(-1);
+	}
+
 	private Boulder(goal: Vector3) {
-		//TODO: place boulder
 		this.place_boulder(goal);
 		this.Object.MoveFinished.Fire();
 		this.modify_energy(-2);
@@ -111,9 +123,8 @@ export class Avatar extends TagComponent<AvatarClass> {
 
 	public selected() {
 		remotes.avatar_selected.fire(this.player, true,this.Object);
-		this.Object.ClickDetector.MaxActivationDistance = 0;
 		let goal: any;
-		let action: string;
+		let action: MoveOptions;
 		this.Trove.addPromise(
 			remotes.avatar_option_selected
 				.promise(
@@ -136,6 +147,9 @@ export class Avatar extends TagComponent<AvatarClass> {
 							break;
 						case "Rest":
 							this.Rest();
+							break;
+						case "Jump":
+							this.Jump(goal as Vector3);
 							break;
 						default:
 							error("wrong value passed?");

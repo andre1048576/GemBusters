@@ -8,8 +8,11 @@ import { construct_boulder } from "server/tileobjects/tileobject_constructor";
 
 const BASE_SIZE = 8;
 
-const palettes = {true: {true: new BrickColor("Sea green"),false: new BrickColor("Dark green")},false: {true: new BrickColor("Beige"),false: new BrickColor("Sand yellow")}}
-const palette_gray = {true : new BrickColor("Grey"),false: new BrickColor("Light yellow")}
+const palettes = {
+	true: { true: new BrickColor("Sea green"), false: new BrickColor("Dark green") },
+	false: { true: new BrickColor("Beige"), false: new BrickColor("Sand yellow") },
+};
+const palette_gray = { true: new BrickColor("Grey"), false: new BrickColor("Light yellow") };
 
 export class Board extends TagComponent<Folder> {
 	public pathNodes: PathTile[] = [];
@@ -23,7 +26,7 @@ export class Board extends TagComponent<Folder> {
 	public paths!: Map<Vector3, Part[]>;
 
 	Start(): void {
-		const [board,objects] = getBoard();
+		const [board, objects] = getBoard();
 		this.GridY = board.size();
 		this.GridX = board[0].size();
 
@@ -38,12 +41,15 @@ export class Board extends TagComponent<Folder> {
 				tile.ScaleTo(this.GridSize / BASE_SIZE);
 				tile.PivotTo(
 					this.centerCFrame
-						.add(new Vector3((r) * this.GridSize, 0, (c) * this.GridSize))
+						.add(new Vector3(r * this.GridSize, 0, c * this.GridSize))
 						.mul(CFrame.Angles(0, math.rad(tile.PrimaryPart!.Orientation.Y), 0)),
 				);
 				tile.Parent = this.Object;
-				tile.PrimaryPart!.Color = palettes[`${r.idiv(10)%2 === c.idiv(10)%2}`][`${r%2 === c%2}`].Color
-				tile.GetChildren().filter(p => p.IsA("BasePart")).filter(p => p !== tile.PrimaryPart).forEach(p => p.Color = palette_gray[`${r.idiv(10)%2 === c.idiv(10)%2}`].Color)
+				tile.PrimaryPart!.Color = palettes[`${r.idiv(10) % 2 === c.idiv(10) % 2}`][`${r % 2 === c % 2}`].Color;
+				tile.GetChildren()
+					.filter((p) => p.IsA("BasePart"))
+					.filter((p) => p !== tile.PrimaryPart)
+					.forEach((p) => (p.Color = palette_gray[`${r.idiv(10) % 2 === c.idiv(10) % 2}`].Color));
 				this.Trove.add(tile);
 				const p = tile.GetChildren().filter((node) => node.HasTag("PathNode")) as [Part];
 				let rowNodes: PathTile[] = [];
@@ -70,9 +76,9 @@ export class Board extends TagComponent<Folder> {
 		});
 
 		objects.forEach((tileObject) => {
-			const pos = tileObject.position!
+			const pos = tileObject.position!;
 			this.Nodes[pos.Z][pos.X][pos.Y].add(tileObject);
-		})
+		});
 
 		this.recalculate_paths();
 	}
@@ -97,7 +103,7 @@ export class Board extends TagComponent<Folder> {
 		this.Nodes[current_position.Z][current_position.X].remove(current_position.Y);
 		this.Nodes[new_position.Z][new_position.X][new_position.Y] = tile;
 		tile.Object.SetAttribute("Position", new_position);
-		tile.avatar?.Object.SetAttribute("Position", new_position);
+		tile.avatar_model?.SetAttribute("Position", new_position);
 	}
 
 	public get_tile(pos: Vector3) {
@@ -148,20 +154,34 @@ export class Board extends TagComponent<Folder> {
 		return this.node_adjacencies.get(pos);
 	};
 
-	public pathfind_existing_path(start : Vector3,steps : Direction[]) : Part[] {
-		let path : Part[] = []
+	public pathfind_existing_path(start: Vector3, steps: Direction[]): Part[] {
+		let path: Part[] = [];
 		let current = this.Nodes[start.Z][start.X][start.Y];
-		steps.forEach(direction => {
-			const [next_tile] = this.get_adjacent(current.Object.GetAttribute("Position") as Vector3)?.find(([_,d]) => d === direction)!
+		steps.forEach((direction) => {
+			const [next_tile] = this.get_adjacent(current.Object.GetAttribute("Position") as Vector3)?.find(
+				([_, d]) => d === direction,
+			)!;
 			path = [
 				...path,
-				...current.get_direction_tiles(direction,false),
-				...next_tile.get_direction_tiles(direction,true)
-			]
+				...current.get_direction_tiles(direction, false),
+				...next_tile.get_direction_tiles(direction, true),
+			];
 			current = next_tile;
 		});
 		return path;
 	}
+
+	public get_tiles_in_range(avatar: Avatar, range: number) {
+		const avatar_pos = avatar.Object.GetAttribute("Position") as Vector3;
+		return this.pathNodes.filter((pathTile) => {
+			const tile_pos = pathTile.Object.GetAttribute("Position") as Vector3;
+			if (math.abs(tile_pos.X - avatar_pos.X) + math.abs(tile_pos.Z - avatar_pos.Z) > range) {
+				return false;
+			}
+			return true;
+		});
+	}
+
 	/**
 	 * pathfind
 	 */

@@ -4,12 +4,12 @@ import type { PathTile } from "../server/tiles/tile";
 import { bool } from "@rbxts/react/src/prop-types";
 import { Direction } from "./path";
 
-export type MoveOptions = "Attack" | "Move" | "Boulder" | "Rest"
+export type MoveOptions = "Attack" | "Move" | "Boulder" | "Rest" | "Jump"
 
 export const remotes = createRemotes(
     {
         avatar_selected : remote<Client,[currently_selected : boolean,avatar : AvatarClass | undefined]>(),
-        avatar_option_selected : remote<Server,[action : "Attack",goal : Vector3] | [action : "Boulder",goal : Vector3] | [action : "Move",path : Direction[]] | [action: "Rest"]>(),
+        avatar_option_selected : remote<Server,[action : "Attack",goal : Vector3] | [action : "Boulder",goal : Vector3] | [action : "Move",path : Direction[]] | [action: "Rest"] | [action : "Jump",goal : Vector3]>(),
         pathfind : remote<Server,[ability : string]>().returns<PathTile[]>(),
         get_adjacencies : remote<Server,[]>().returns<[Vector3,[Part,Direction,Part[]][]][]>(),
         enter_match : remote<Client,[other_players : Player[]]>(),

@@ -6,7 +6,7 @@ import { TileObject } from "server/tileobjects/TileObject";
 export class PathTile extends TagComponent<Part> {
 	public direction!: Direction;
 
-	public avatar?: Avatar;
+	public avatar_model : AvatarClass | undefined;
 
 	public tile_objects: TileObject[] = [];
 
@@ -20,16 +20,7 @@ export class PathTile extends TagComponent<Part> {
 			case Direction.Up:
 				return direction;
 			case Direction.Down:
-				switch (direction) {
-					case Direction.Up:
-						return Direction.Down;
-					case Direction.Down:
-						return Direction.Up;
-					case Direction.Left:
-						return Direction.Right;
-					case Direction.Right:
-						return Direction.Left;
-				}
+				return opposite_direction(direction)
 			case Direction.Left:
 				switch (direction) {
 					case Direction.Up:
@@ -102,11 +93,11 @@ export class PathTile extends TagComponent<Part> {
 	}
 
 	public landed(avatar: Avatar) {
-		this.avatar = avatar;
+		this.avatar_model = avatar.Object;
 	}
 
 	public left(avatar: Avatar) {
-		this.avatar = undefined;
+		this.avatar_model = undefined;
 	}
 
 	public add(tileObject: TileObject) {
@@ -126,11 +117,11 @@ export class PathTile extends TagComponent<Part> {
 		if (this.tile_objects.some((v) => v.obstructs())) {
 			return false;
 		}
-		return !this.avatar;
+		return !this.avatar_model;
 	}
 
 	public isEmpty() {
-		if (this.avatar) {
+		if (this.avatar_model) {
 			return false;
 		}
 		return this.tile_objects.isEmpty();

@@ -180,6 +180,7 @@ function onAttackClick(trove: Trove, avatar: AvatarClass, set_choice: (selection
 	trove.add(
 		task.spawn(() => {
 			const [success, tiles] = remotes.pathfind("Attack").await();
+			print(tiles);
 			if (!success) {
 				error("huh");
 			}
@@ -225,7 +226,7 @@ function onAttackClick(trove: Trove, avatar: AvatarClass, set_choice: (selection
 	);
 }
 
-function onBoulderClick(trove: Trove, set_choice: (selection: any, canConfirm: boolean) => void) {
+function onBoulderClick(trove: Trove, avatar: AvatarClass,set_choice: (selection: any, canConfirm: boolean) => void) {
 	trove.add(
 		task.spawn(() => {
 			const part_trove = trove.extend();
@@ -274,7 +275,56 @@ function onBoulderClick(trove: Trove, set_choice: (selection: any, canConfirm: b
 	);
 }
 
-function onRestClick(set_choice: (selection: any, canConfirm: boolean) => void) {
+function onJumpClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: any, canConfirm: boolean) => void) {
+	trove.add(
+		task.spawn(() => {
+			const part_trove = trove.extend();
+			const [success, tiles] = remotes.pathfind("Jump").await();
+			if (!success) {
+				error("huh");
+			}
+			const bindable = new Instance("BindableEvent");
+			part_trove.add(bindable);
+			function onHoveredPartClicked(part: Part) {
+				const position = part.Parent?.GetAttribute("Position") as Vector3;
+				bindable.Fire(position);
+			}
+			trove.add(
+				task.spawn(() => {
+					while (true) {
+						for (const tile of tiles) {
+							const part = new Instance("Part");
+							part_trove.add(part);
+							const clickDetector = new Instance("ClickDetector");
+							clickDetector.MaxActivationDistance = 1e5;
+							part.PivotTo(tile.Object.CFrame.mul(new CFrame(0, -tile.Object.Size.Y / 2, 0)));
+							part.Parent = tile.Object;
+							part.Anchored = true;
+							part.CanCollide = false;
+							part.CanQuery = true;
+							part.CanTouch = false;
+							part.Material = Enum.Material.SmoothPlastic;
+							part.Color = Color3.fromRGB(194, 18, 18);
+							part.Size = new Vector3(8, 0.005, 8).mul(
+								tile.Object.GetAttribute("HighlightSize") as Vector3,
+							);
+							part.Transparency = 0.5;
+							clickDetector.MouseHoverEnter.Connect(() => (part.BrickColor = BrickColor.Green()));
+							clickDetector.MouseHoverLeave.Connect(() => (part.Color = Color3.fromRGB(194, 18, 18)));
+							clickDetector.Parent = part;
+							clickDetector.MouseClick.Connect(() => onHoveredPartClicked(part));
+						}
+						const [position] = bindable.Event.Wait();
+						part_trove.destroy();
+						set_choice(position, true);
+					}
+				}),
+			);
+		}),
+	);
+}
+
+function onRestClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: any, canConfirm: boolean) => void) {
 	set_choice(undefined, true);
 }
 
@@ -282,52 +332,79 @@ interface BaseOptionsProps {
 	trove: Trove;
 	avatar: AvatarClass;
 	setChoice: (selection: any, canConfirm: boolean) => void;
-	showBackPage : (move_type : MoveOptions) => void;
+	showBackPage: (move_type: MoveOptions) => void;
 }
 
-export function BaseOptions({ trove, avatar, setChoice,showBackPage }: BaseOptionsProps) {
+const base_options = [
+	{
+		name: "Move",
+		onClick: onMoveClick,
+		energyCost: 0,
+		description: "Move Equal to your remaining ⚡",
+	},
+	{
+		name: "Attack",
+		onClick: onAttackClick,
+		energyCost: 1,
+		description: "Deal 2 damage to a nearby obstacle or player.",
+	},
+	{
+		name: "Jump",
+		onClick: onJumpClick,
+		energyCost: 1,
+		description: "Jumpety",
+	},
+	{
+		name: "Rest",
+		onClick: onRestClick,
+		energyCost: 0,
+		description: "Replenish your ⚡, but you take +1 damage from all sources until your next turn.",
+	},
+];
+
+export function BaseOptions({ trove, avatar, setChoice, showBackPage }: BaseOptionsProps) {
 	return (
 		<frame Size={UDim2.fromScale(1, 2 / 3)} BackgroundTransparency={1}>
-			<MainPageOption
-				onClick={() => {
-					showBackPage("Move");
-					onMoveClick(trove, avatar, setChoice);
-				}}
-				name="Move"
-				xCoordinate={0}
-				description={"Move Equal to your remaining ⚡"}
-				energy_cost={0}
-			/>
-			<MainPageOption
-				onClick={() => {
-					showBackPage("Attack");
-					onAttackClick(trove, avatar, setChoice);
-				}}
-				name="Attack"
-				xCoordinate={1}
-				description="Smash rocks!"
-				energy_cost={1}
-			/>
-			<MainPageOption
-				onClick={() => {
-					showBackPage("Boulder");
-					onBoulderClick(trove, setChoice);
-				}}
-				name="Boulder"
-				xCoordinate={2}
-				description="Deploy a Rock to impede enemies."
-				energy_cost={2}
-			/>
-			<MainPageOption
-				onClick={() => {
-					showBackPage("Rest");
-					onRestClick(setChoice);
-				}}
-				name="Rest"
-				xCoordinate={3}
-				description="Replenish your ⚡, but you take +1 damage from all sources until your next turn."
-				energy_cost={0}
-			/>
+			{base_options.map((data,i) => (
+				<MainPageOption
+					onClick={() => {
+						showBackPage(data.name as MoveOptions);
+						data.onClick(trove,avatar,setChoice);
+					}}
+					name={data.name}
+					xCoordinate={i}
+					description={data.description}
+					energy_cost={data.energyCost}
+				/>
+			))}
+		</frame>
+	);
+}
+
+const avatar_options = [
+	{
+		name: "Boulder",
+		onClick: onBoulderClick,
+		energyCost: 2,
+		description: "Rock and stone.",
+	},
+]
+
+export function AvatarOptions({ trove, avatar, setChoice, showBackPage }: BaseOptionsProps) {
+	return (
+		<frame Size={UDim2.fromScale(1, 2 / 3)} BackgroundTransparency={1}>
+			{avatar_options.map((data,i) => (
+				<MainPageOption
+					onClick={() => {
+						showBackPage(data.name as MoveOptions);
+						data.onClick(trove,avatar,setChoice);
+					}}
+					name={data.name}
+					xCoordinate={i}
+					description={data.description}
+					energy_cost={data.energyCost}
+				/>
+			))}
 		</frame>
 	);
 }

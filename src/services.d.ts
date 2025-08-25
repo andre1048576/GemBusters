@@ -24,7 +24,6 @@ interface MatchSpawnerI extends Part {
 }
 
 interface AvatarClass extends Model {
-	ClickDetector: ClickDetector;
 	Humanoid: Humanoid;
 	MoveFinished: BindableEvent;
 }

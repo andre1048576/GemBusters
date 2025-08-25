@@ -5,7 +5,7 @@ import { Trove } from "@rbxts/trove";
 import { config } from "@rbxts/ripple";
 import { Direction, opposite_direction } from "shared/path";
 import { Workspace } from "@rbxts/services";
-import { BaseOptions } from "./avatar_option";
+import { AvatarOptions, BaseOptions } from "./avatar_option";
 
 export enum Page {
 	Primary,
@@ -17,26 +17,45 @@ const trove = new Trove();
 interface MainPageProps {
 	avatar: AvatarClass;
 	setChoice: (selection: any, canConfirm: boolean) => void;
-	showBackPage: (moveType : MoveOptions) => void;
+	showBackPage: (moveType: MoveOptions) => void;
+	generic_options: boolean;
+	toggle_options_listed: () => void;
 }
 
-function MainPage({ avatar, setChoice, showBackPage }: MainPageProps) {
-	const [firstPage, setFirstPage] = useState(false);
-	return (
-		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
-			<BaseOptions trove={trove} avatar={avatar} setChoice={setChoice} showBackPage={showBackPage} />
-			<textbutton
-				Text={firstPage ? "Base Options" : "Special Options"}
-				Size={UDim2.fromScale(1, 1 / 2)}
-				Position={new UDim2(0, 0, 2 / 3, 15)}
-				Event={{
-					Activated: () => {
-						setFirstPage(!firstPage);
-					},
-				}}
-			/>
-		</frame>
-	);
+function MainPage({ avatar, setChoice, showBackPage, generic_options, toggle_options_listed }: MainPageProps) {
+	if (generic_options) {
+		return (
+			<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
+				<BaseOptions trove={trove} avatar={avatar} setChoice={setChoice} showBackPage={showBackPage} />
+				<textbutton
+					Text={"Special Options"}
+					Size={UDim2.fromScale(1, 1 / 2)}
+					Position={new UDim2(0, 0, 2 / 3, 15)}
+					Event={{
+						Activated: () => {
+							toggle_options_listed();
+						},
+					}}
+				/>
+			</frame>
+		);
+	} else {
+		return (
+			<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
+				<AvatarOptions trove={trove} avatar={avatar} setChoice={setChoice} showBackPage={showBackPage} />
+				<textbutton
+					Text={"Base Options"}
+					Size={UDim2.fromScale(1, 1 / 2)}
+					Position={new UDim2(0, 0, 2 / 3, 15)}
+					Event={{
+						Activated: () => {
+							toggle_options_listed();
+						},
+					}}
+				/>
+			</frame>
+		);
+	}
 }
 
 interface BackPageProps {
@@ -81,6 +100,11 @@ export function AvatarUI() {
 	const [visiblePage, _setVisiblePage] = useState(Page.Primary);
 	const [avatar, setAvatar] = useState<AvatarClass | undefined>(undefined);
 	const [canConfirm, setCanConfirm] = useBinding(false);
+	const [isGenericOptionsDisplayed, setGenericOptionsDisplayed] = useState(true);
+
+	function toggleGenericOptionsDisplayed() {
+		setGenericOptionsDisplayed(!isGenericOptionsDisplayed);
+	}
 
 	function setVisible(is_visible: boolean) {
 		_setVisible(is_visible);
@@ -113,16 +137,20 @@ export function AvatarUI() {
 		setVisible(false);
 		switch (move_type) {
 			case "Attack":
-				remotes.avatar_option_selected(move_type,output);
+				remotes.avatar_option_selected(move_type, output);
 				break;
 			case "Move":
-				remotes.avatar_option_selected(move_type,output);
+				remotes.avatar_option_selected(move_type, output);
 				break;
 			case "Rest":
 				remotes.avatar_option_selected(move_type);
 				break;
 			case "Boulder":
-				remotes.avatar_option_selected(move_type,output);
+				remotes.avatar_option_selected(move_type, output);
+				break;
+			case "Jump":
+				remotes.avatar_option_selected(move_type, output);
+				break;
 		}
 	}
 
@@ -146,6 +174,8 @@ export function AvatarUI() {
 							move_type = moveType;
 							setVisiblePage(Page.Back);
 						}}
+						generic_options={isGenericOptionsDisplayed}
+						toggle_options_listed={toggleGenericOptionsDisplayed}
 					/>
 				);
 			case Page.Back:
