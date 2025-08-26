@@ -25,6 +25,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@rbxts/bezier": "^0.2.0",
     "@rbxts/component": "^1.2.0",
     "@rbxts/document-service": "^1.2.2-ts.1",
     "@rbxts/pretty-react-hooks": "^0.6.4",
