@@ -5,6 +5,7 @@ import { TileConstructor } from "server/tiles/tile_constructor";
 import { Avatar } from "./avatar";
 import { getBoard } from "server/boards";
 import { construct_boulder } from "server/tileobjects/tileobject_constructor";
+import { number } from "@rbxts/react/src/prop-types";
 
 const BASE_SIZE = 8;
 
@@ -18,6 +19,7 @@ export class Board extends TagComponent<Folder> {
 	public pathNodes: PathTile[] = [];
 
 	public Nodes: PathTile[][][] = [];
+	public Tiles: Model[][] = [];
 	public node_adjacencies: Map<Vector3, [PathTile, Direction][]> = new Map();
 	public GridY!: number;
 	public GridX!: number;
@@ -36,6 +38,7 @@ export class Board extends TagComponent<Folder> {
 
 		board.forEach((models, c) => {
 			let columnNodes: PathTile[][] = [];
+			this.Tiles.push([...models]);
 			models.forEach((tile, r) => {
 				tile.SetAttribute("Position", new Vector3(r, c));
 				tile.ScaleTo(this.GridSize / BASE_SIZE);
@@ -171,11 +174,30 @@ export class Board extends TagComponent<Folder> {
 		return path;
 	}
 
+	//this does not get every point on a path from p1 to p2, but every point in a square assuming two opposite corners of p1 and p2
+	//this is fine because the jump (the only method that should use this) only has a range of 2
+	public coordinates_between(x1: number, y1: number, x2: number, y2: number) {
+		if (x1 > x2) {
+			[x1, x2] = [x2, x1];
+		}
+		if (y1 > y2) {
+			[y1, y2] = [y2, y1];
+		}
+		let values = [];
+		for (let x = x1; x <= x2; x++) {
+			for (let y = y1; y <= y2; y++) {
+				values.push([x, y]);
+			}
+		}
+		return values;
+	}
+
 	public get_tiles_in_range(avatar: Avatar, range: number) {
 		const avatar_pos = avatar.Object.GetAttribute("Position") as Vector3;
 		return this.pathNodes.filter((pathTile) => {
 			const tile_pos = pathTile.Object.GetAttribute("Position") as Vector3;
-			if (math.abs(tile_pos.X - avatar_pos.X) + math.abs(tile_pos.Z - avatar_pos.Z) > range) {
+			const distance = math.abs(tile_pos.X - avatar_pos.X) + math.abs(tile_pos.Z - avatar_pos.Z);
+			if (distance > range || distance === 0) {
 				return false;
 			}
 			return true;

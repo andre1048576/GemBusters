@@ -79,8 +79,7 @@ function onMoveClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: 
 				.find(([v]) => v === adj_part.GetAttribute("Position"))![1]
 				.find(([, d]) => d === opposite_direction(dir))![0];
 			let temporary_worldspace = temporary_tile.Position;
-			const bindable = new Instance("BindableEvent");
-			trove.add(bindable);
+			const bindable = trove.add(new Instance("BindableEvent"));
 			const tiles: Part[] = [];
 			const visible_path: Part[] = [];
 			const path: Direction[] = [];
@@ -104,7 +103,7 @@ function onMoveClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: 
 						if (worldSpace !== temporary_worldspace) {
 							const new_part = new Instance("Part");
 							const midpoint = worldSpace.add(temporary_worldspace).div(2);
-							new_part.Color = new Color3(0,0,1)
+							new_part.Color = new Color3(0, 0, 1);
 							const thickness = 0.5;
 							new_part.CanCollide = false;
 							new_part.CanQuery = false;
@@ -142,8 +141,7 @@ function onMoveClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: 
 							if (path.size() === max_steps && path[path.size() - 1] !== opposite_direction(direction)) {
 								continue;
 							}
-							const part = new Instance("Part");
-							part_trove.add(part);
+							const part = part_trove.add(new Instance("Part"));
 							const clickDetector = new Instance("ClickDetector");
 							clickDetector.MaxActivationDistance = 1e5;
 							part.PivotTo(tile.CFrame.mul(new CFrame(0, -tile.Size.Y / 2, 0)));
@@ -227,7 +225,7 @@ function onAttackClick(trove: Trove, avatar: AvatarClass, set_choice: (selection
 	);
 }
 
-function onBoulderClick(trove: Trove, avatar: AvatarClass,set_choice: (selection: any, canConfirm: boolean) => void) {
+function onBoulderClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: any, canConfirm: boolean) => void) {
 	trove.add(
 		task.spawn(() => {
 			const part_trove = trove.extend();
@@ -366,11 +364,11 @@ const base_options = [
 export function BaseOptions({ trove, avatar, setChoice, showBackPage }: BaseOptionsProps) {
 	return (
 		<frame Size={UDim2.fromScale(1, 2 / 3)} BackgroundTransparency={1}>
-			{base_options.map((data,i) => (
+			{base_options.map((data, i) => (
 				<MainPageOption
 					onClick={() => {
 						showBackPage(data.name as MoveOptions);
-						data.onClick(trove,avatar,setChoice);
+						data.onClick(trove, avatar, setChoice);
 					}}
 					name={data.name}
 					xCoordinate={i}
@@ -387,18 +385,18 @@ const avatar_options = [
 		name: "Boulder",
 		onClick: onBoulderClick,
 		energyCost: 2,
-		description: "Rock and stone.",
+		description: "Deploy a rock to impede enemies.",
 	},
-]
+];
 
 export function AvatarOptions({ trove, avatar, setChoice, showBackPage }: BaseOptionsProps) {
 	return (
 		<frame Size={UDim2.fromScale(1, 2 / 3)} BackgroundTransparency={1}>
-			{avatar_options.map((data,i) => (
+			{avatar_options.map((data, i) => (
 				<MainPageOption
 					onClick={() => {
 						showBackPage(data.name as MoveOptions);
-						data.onClick(trove,avatar,setChoice);
+						data.onClick(trove, avatar, setChoice);
 					}}
 					name={data.name}
 					xCoordinate={i}

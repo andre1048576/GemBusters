@@ -79,8 +79,7 @@ export class Match extends TagComponent<MatchClass> {
 			};
 			avatar.get_tile = (goal) => {
 				return this.board.get_tile(goal);
-			}
-
+			};
 		});
 
 		//TODO: TURN THIS INTO TWO EVENTS
@@ -112,10 +111,22 @@ export class Match extends TagComponent<MatchClass> {
 				if (avatar.tileOn!.Object.HasTag("Covered")) {
 					return [];
 				}
-				function is_valid(tile: PathTile) {
+				function is_valid(avatar: Avatar, tile: PathTile, board: Board) {
+					const avatar_pos = avatar.Object.GetAttribute("Position") as Vector3;
+					const pos = tile.Object.GetAttribute("Position") as Vector3;
+					if (
+						board
+							.coordinates_between(avatar_pos.X, avatar_pos.Z, pos.X, pos.Z)
+							.map(([x, y]) => {
+								return board.Tiles[y][x];
+							})
+							.some((v) => v.HasTag("UnJumpable"))
+					) {
+						return false;
+					}
 					return !tile.tile_objects.some((v) => v.obstructs()) && !tile.Object.HasTag("Covered");
 				}
-				return this.board.get_tiles_in_range(avatar, 2).filter(t => is_valid(t));
+				return this.board.get_tiles_in_range(avatar, 2).filter((t) => is_valid(avatar, t, this.board));
 			}
 			error("invalid type suggested!");
 		});
