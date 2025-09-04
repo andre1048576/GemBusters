@@ -104,6 +104,7 @@ function onMoveClick(trove: Trove, avatar: AvatarClass, set_choice: (selection: 
 						if (worldSpace !== temporary_worldspace) {
 							const new_part = new Instance("Part");
 							const midpoint = worldSpace.add(temporary_worldspace).div(2);
+							new_part.Color = new Color3(0,0,1)
 							const thickness = 0.5;
 							new_part.CanCollide = false;
 							new_part.CanQuery = false;
